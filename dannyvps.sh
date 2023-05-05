@@ -1,12 +1,25 @@
 #!/bin/bash
 
+# Instalar dependencias necesarias
+apt-get update && apt-get install -y jq
+
 # Definir la ruta del archivo JSON
 config_file="/root/udp/config.json"
+
+# Función para mostrar las contraseñas existentes
+function show_passwords() {
+  # Leer las contraseñas desde el archivo JSON
+  passwords=$(jq -r '.auth.pass | join(", ")' "$config_file")
+
+  # Mostrar las contraseñas al usuario
+  echo -e "\e[1m\e[32mContraseñas existentes:\e[0m"
+  echo "$passwords"
+}
 
 # Función para agregar una contraseña
 function add_password() {
   # Leer las nuevas contraseñas desde el usuario
-  echo "Ingrese las nuevas contraseñas separadas por comas: "
+  echo -e "\e[1m\e[32mIngrese las nuevas contraseñas separadas por comas: \e[0m"
   read new_passwords
 
   # Convertir las contraseñas a un array
@@ -23,9 +36,9 @@ function add_password() {
 
   # Confirmar que se actualizaron las contraseñas correctamente
   if [ "$?" -eq 0 ]; then
-    echo "Contraseñas actualizadas correctamente."
+    echo -e "\e[1m\e[32mContraseñas actualizadas correctamente.\e[0m"
   else
-    echo "No se pudo actualizar las contraseñas."
+    echo -e "\e[1m\e[31mNo se pudo actualizar las contraseñas.\e[0m"
   fi
 
   # Recargar el daemon de systemd y reiniciar el servicio
@@ -39,7 +52,7 @@ function delete_password() {
   existing_passwords=$(jq -r '.auth.pass | join(",")' "$config_file")
 
   # Leer la contraseña que se quiere eliminar desde el usuario
-  echo "Ingrese la contraseña que desea eliminar: "
+  echo -e "\e[1m\e[32mIngrese la contraseña que desea eliminar: \e[0m"
   read password_to_delete
 
   # Eliminar la contraseña del array de contraseñas
@@ -50,9 +63,9 @@ function delete_password() {
 
   # Confirmar que se eliminó la contraseña correctamente
   if [ "$?" -eq 0 ]; then
-    echo "Contraseña eliminada correctamente."
+    echo -e "\e[1m\e[32mContraseña eliminada correctamente.\e[0m"
   else
-    echo "No se pudo eliminar la contraseña."
+    echo -e "\e[1m\e[31mNo se pudo eliminar la contraseña.\e[0m"
   fi
 
   # Recargar el daemon de systemd y reiniciar el servicio
@@ -60,24 +73,28 @@ function delete_password() {
   sudo systemctl restart udp-custom
 }
 
-# Loop para mostrar el menú de opciones
+# Recargar el daemon de systemd y reiniciar el servicio
+sudo systemctl daemon-reload
+sudo systemctl restart udp-custom
+
+# Menu principal
 while true; do
-  echo "Seleccione una opción:"
-  echo "1. Agregar una contraseña"
-  echo "2. Eliminar una contraseña"
-  echo "3. Salir"
+echo -e "\e[1m\e[36mGestión de contraseñas para UDP Custom\e[0m"
+echo ""
+echo "Seleccione una opción:"
+echo "1. Mostrar contraseñas existentes"
+echo "2. Agregar una contraseña"
+echo "3. Eliminar una contraseña"
+echo "4. Salir"
+read option
 
-  # Leer la opción seleccionada desde el usuario
-  read option
+case $option in
+1) show_passwords;;
+2) add_password;;
+3) delete_password;;
+4) break;;
+*) echo -e "\e[1m\e[31mOpción inválida.\e[0m";;
+esac
 
-  # Evaluar la opción seleccionada
-  case $option in
-    1) add_password ;;
-    2) delete_password ;;
-    3) exit ;;
-    *) echo "Opción inválida" ;;
-  esac
+echo ""
 done
-
-# Descargar e instalar UDP
-wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=1CCEp3uoQ5E4LxkydfzcM7yD6elos6Ufh' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1CCEp3uoQ5E4LxkydfzcM7yD6elos6Ufh" -O install-udp && rm -rf /tmp/cookies.txt && chmod +x install-udp && ./install-udp [optional port exclude separated by coma, ex. 7300,1194]
