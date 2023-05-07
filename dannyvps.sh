@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# Instalar dependencias necesarias
-apt-get update && apt-get install -y jq
-
 # Definir la ruta del archivo JSON
 config_file="/root/udp/config.json"
 
@@ -10,6 +7,9 @@ config_file="/root/udp/config.json"
 function show_passwords() {
   # Leer las contraseñas desde el archivo JSON
   passwords=$(jq -r '.auth.pass | join(", ")' "$config_file")
+
+# Instalar dependencias necesarias
+apt-get update && apt-get install -y jq
 
   # Mostrar las contraseñas al usuario
   echo -e "\e[1m\e[32mContraseñas existentes:\e[0m"
